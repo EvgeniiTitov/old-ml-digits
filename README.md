@@ -13,15 +13,17 @@ the task.
 
 **train.py** - model training. If you'd like to test it, please specify the training
 conditions in the config.py. The script will work with some of the SOTA models 
-such as ResNet, VGG, AlexNet etc.
+such as ResNet, VGG, AlexNet etc. The thing to note is I renamed the folder with
+training and testing data from training -> train, testing -> val. 
 
-To score the model please run **inference.py** with the validation_folder arg. The 
-trained weights and other artifacts could be found under *output*
-
+```
+To score the model please run inference.py with the validation_folder arg. The 
+trained weights and other artifacts could be found under output/
+```
 
 
 ---
-#####Training process (for myself):
+##### Training process (for myself):
 
 The problem at hand is super simple, so using a heavy large SOTA network here 
 is definitely an overkill. And yet, it is the fastest way to get the requested
