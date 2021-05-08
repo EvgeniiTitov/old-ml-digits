@@ -2,20 +2,20 @@ import os
 import typing as t
 
 import torch
-from torchvision import datasets, transforms
+from torchvision import datasets
+from torchvision import transforms
 
 from .logger_mixin import LoggerMixin
 from config import Config
 
 
 class DatasetLoader(LoggerMixin):
-
     def __init__(
-            self,
-            path_to_dataset: str,
-            augmentation: bool,
-            input_size: int,
-            batch_size: int
+        self,
+        path_to_dataset: str,
+        augmentation: bool,
+        input_size: int,
+        batch_size: int,
     ) -> None:
         self._path_to_dataset = path_to_dataset
         self._augmentation = augmentation
@@ -27,41 +27,59 @@ class DatasetLoader(LoggerMixin):
         if self._augmentation:
             self.logger.info("Using augmentation: Rotations, ColorJitter")
             data_transforms = {
-                "train": transforms.Compose([
-                    transforms.Resize((self._input_size, self._input_size)),
-                    transforms.RandomRotation(degrees=Config.ROTATION_DEGREES),
-                    transforms.ColorJitter(),
-                    transforms.ToTensor(),
-                    transforms.Normalize(
-                        Config.NORMALIZATION_MEAN, Config.NORMALIZATION_STD
-                    )
-                ]),
-                "val": transforms.Compose([
-                    transforms.Resize((self._input_size, self._input_size)),
-                    transforms.CenterCrop(self._input_size),
-                    transforms.ToTensor(),
-                    transforms.Normalize(
-                        Config.NORMALIZATION_MEAN, Config.NORMALIZATION_STD
-                    )
-                ])
+                "train": transforms.Compose(
+                    [
+                        transforms.Resize(
+                            (self._input_size, self._input_size)
+                        ),
+                        transforms.RandomRotation(
+                            degrees=Config.ROTATION_DEGREES
+                        ),
+                        transforms.ColorJitter(),
+                        transforms.ToTensor(),
+                        transforms.Normalize(
+                            Config.NORMALIZATION_MEAN, Config.NORMALIZATION_STD
+                        ),
+                    ]
+                ),
+                "val": transforms.Compose(
+                    [
+                        transforms.Resize(
+                            (self._input_size, self._input_size)
+                        ),
+                        transforms.CenterCrop(self._input_size),
+                        transforms.ToTensor(),
+                        transforms.Normalize(
+                            Config.NORMALIZATION_MEAN, Config.NORMALIZATION_STD
+                        ),
+                    ]
+                ),
             }
         else:
             data_transforms = {
-                "train": transforms.Compose([
-                    transforms.Resize((self._input_size, self._input_size)),
-                    transforms.ToTensor(),
-                    transforms.Normalize(
-                        Config.NORMALIZATION_MEAN, Config.NORMALIZATION_STD
-                    )
-                ]),
-                "val": transforms.Compose([
-                    transforms.Resize((self._input_size, self._input_size)),
-                    transforms.CenterCrop(self._input_size),
-                    transforms.ToTensor(),
-                    transforms.Normalize(
-                        Config.NORMALIZATION_MEAN, Config.NORMALIZATION_STD
-                    )
-                ])
+                "train": transforms.Compose(
+                    [
+                        transforms.Resize(
+                            (self._input_size, self._input_size)
+                        ),
+                        transforms.ToTensor(),
+                        transforms.Normalize(
+                            Config.NORMALIZATION_MEAN, Config.NORMALIZATION_STD
+                        ),
+                    ]
+                ),
+                "val": transforms.Compose(
+                    [
+                        transforms.Resize(
+                            (self._input_size, self._input_size)
+                        ),
+                        transforms.CenterCrop(self._input_size),
+                        transforms.ToTensor(),
+                        transforms.Normalize(
+                            Config.NORMALIZATION_MEAN, Config.NORMALIZATION_STD
+                        ),
+                    ]
+                ),
             }
         return data_transforms
 
@@ -72,7 +90,7 @@ class DatasetLoader(LoggerMixin):
         image_datasets = {
             phase: datasets.ImageFolder(
                 os.path.join(self._path_to_dataset, phase),
-                data_transforms[phase]
+                data_transforms[phase],
             )
             for phase in ["train", "val"]
         }
@@ -82,7 +100,7 @@ class DatasetLoader(LoggerMixin):
             phase: torch.utils.data.DataLoader(
                 image_datasets[phase],
                 batch_size=self._batch_size,
-                shuffle=True
+                shuffle=True,
             )
             for phase in ["train", "val"]
         }

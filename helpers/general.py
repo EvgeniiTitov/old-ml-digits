@@ -1,5 +1,5 @@
-import typing as t
 import os
+import typing as t
 
 import matplotlib.pyplot as plt
 from pydantic import BaseModel
@@ -7,8 +7,7 @@ from pydantic import validator
 
 
 def visualise_training_results(
-        acc_history: t.Sequence[float],
-        loss_history: t.Sequence[float]
+    acc_history: t.Sequence[float], loss_history: t.Sequence[float]
 ) -> None:
     plt.subplot(1, 2, 1)
     plt.ylabel("Accuracy")

@@ -21,9 +21,6 @@ class Logger:
         return console_handler
 
     def info(self, *args, **kwargs) -> None:
-        self._logger.debug(*args, **kwargs)
-
-    def info(self, *args, **kwargs) -> None:
         self._logger.info(*args, **kwargs)
 
     def warning(self, *args, **kwargs) -> None:

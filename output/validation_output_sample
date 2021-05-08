@@ -1,23 +1,23 @@
-2021-05-08T19:23:12+1000 helpers.logger_mixin.TrainedClassifierModel INFO 37: The model DigitsClassifier initialized with classes ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-2021-05-08 19:23:12,535 inference.py INFO 27: The following classes will be validated: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-2021-05-08 19:23:12,535 inference.py INFO 27: Validating class: 0
-2021-05-08 19:23:15,199 inference.py INFO 27: Validation results for class 0: 972 / 980
-2021-05-08 19:23:15,199 inference.py INFO 27: Validating class: 1
-2021-05-08 19:23:16,496 inference.py INFO 27: Validation results for class 1: 1124 / 1135
-2021-05-08 19:23:16,496 inference.py INFO 27: Validating class: 2
-2021-05-08 19:23:17,651 inference.py INFO 27: Validation results for class 2: 1022 / 1032
-2021-05-08 19:23:17,651 inference.py INFO 27: Validating class: 3
-2021-05-08 19:23:18,802 inference.py INFO 27: Validation results for class 3: 999 / 1010
-2021-05-08 19:23:18,802 inference.py INFO 27: Validating class: 4
-2021-05-08 19:23:19,930 inference.py INFO 27: Validation results for class 4: 971 / 982
-2021-05-08 19:23:19,930 inference.py INFO 27: Validating class: 5
-2021-05-08 19:23:20,963 inference.py INFO 27: Validation results for class 5: 881 / 892
-2021-05-08 19:23:20,963 inference.py INFO 27: Validating class: 6
-2021-05-08 19:23:22,046 inference.py INFO 27: Validation results for class 6: 946 / 958
-2021-05-08 19:23:22,046 inference.py INFO 27: Validating class: 7
-2021-05-08 19:23:23,212 inference.py INFO 27: Validation results for class 7: 1018 / 1028
-2021-05-08 19:23:23,212 inference.py INFO 27: Validating class: 8
-2021-05-08 19:23:24,334 inference.py INFO 27: Validation results for class 8: 961 / 974
-2021-05-08 19:23:24,334 inference.py INFO 27: Validating class: 9
-2021-05-08 19:23:25,517 inference.py INFO 27: Validation results for class 9: 993 / 1009
-2021-05-08 19:23:25,517 inference.py INFO 27: ACCURACY: 0.9887
+2021-05-08T20:52:27+1000 helpers.logger_mixin.TrainedClassificationModel INFO 46: The model DigitsClassifier initialized with classes ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+2021-05-08 20:52:27,207 inference.py INFO 24: The following classes will be validated (found in the folder provided): ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+2021-05-08 20:52:27,207 inference.py INFO 24: Validating class: 0
+2021-05-08 20:52:33,418 inference.py INFO 24: Validation results for class 0 is 1.0000
+2021-05-08 20:52:33,418 inference.py INFO 24: Validating class: 1
+2021-05-08 20:52:38,696 inference.py INFO 24: Validation results for class 1 is 0.9982
+2021-05-08 20:52:38,696 inference.py INFO 24: Validating class: 2
+2021-05-08 20:52:43,524 inference.py INFO 24: Validation results for class 2 is 0.9981
+2021-05-08 20:52:43,524 inference.py INFO 24: Validating class: 3
+2021-05-08 20:52:48,257 inference.py INFO 24: Validation results for class 3 is 0.9970
+2021-05-08 20:52:48,258 inference.py INFO 24: Validating class: 4
+2021-05-08 20:52:52,893 inference.py INFO 24: Validation results for class 4 is 0.9969
+2021-05-08 20:52:52,893 inference.py INFO 24: Validating class: 5
+2021-05-08 20:52:57,075 inference.py INFO 24: Validation results for class 5 is 0.9955
+2021-05-08 20:52:57,075 inference.py INFO 24: Validating class: 6
+2021-05-08 20:53:01,564 inference.py INFO 24: Validation results for class 6 is 0.9948
+2021-05-08 20:53:01,564 inference.py INFO 24: Validating class: 7
+2021-05-08 20:53:06,411 inference.py INFO 24: Validation results for class 7 is 0.9981
+2021-05-08 20:53:06,412 inference.py INFO 24: Validating class: 8
+2021-05-08 20:53:10,960 inference.py INFO 24: Validation results for class 8 is 0.9949
+2021-05-08 20:53:10,960 inference.py INFO 24: Validating class: 9
+2021-05-08 20:53:15,730 inference.py INFO 24: Validation results for class 9 is 0.9921
+2021-05-08 20:53:15,730 inference.py INFO 24: ACCURACY: 0.9966

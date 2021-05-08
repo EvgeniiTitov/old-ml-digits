@@ -1,16 +1,17 @@
-import typing as t
-import os
 import argparse
+import os
+import typing as t
 
-import torch
 import cv2
 import numpy as np
+import torch
 import torchvision
 from PIL import Image
 from pydantic import ValidationError
 
-from helpers import LoggerMixin, Logger
 from config import Config
+from helpers import Logger
+from helpers import LoggerMixin
 from helpers import RuntimeArgsValidator
 
 
@@ -23,12 +24,13 @@ class TrainedClassificationModel(LoggerMixin):
     be plugged in provided that it relies on the preprocessing steps
     implemented below
     """
+
     def __init__(
-            self,
-            model_name: str,
-            model_weights: str,
-            model_classes: str,
-            device: str = "gpu"
+        self,
+        model_name: str,
+        model_weights: str,
+        model_classes: str,
+        device: str = "gpu",
     ) -> None:
         self._model_name = model_name
         try:
@@ -66,15 +68,17 @@ class TrainedClassificationModel(LoggerMixin):
         ]
 
     def _get_transformation(self) -> torchvision.transforms.Compose:
-        return torchvision.transforms.Compose([
-            torchvision.transforms.Resize(
-                (Config.INPUT_SIZE, Config.INPUT_SIZE)
-            ),
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize(
-                Config.NORMALIZATION_MEAN, Config.NORMALIZATION_STD
-            ),
-        ])
+        return torchvision.transforms.Compose(
+            [
+                torchvision.transforms.Resize(
+                    (Config.INPUT_SIZE, Config.INPUT_SIZE)
+                ),
+                torchvision.transforms.ToTensor(),
+                torchvision.transforms.Normalize(
+                    Config.NORMALIZATION_MEAN, Config.NORMALIZATION_STD
+                ),
+            ]
+        )
 
     @staticmethod
     def read_classes(path_to_file: str) -> t.List[str]:
@@ -82,34 +86,42 @@ class TrainedClassificationModel(LoggerMixin):
             return [item.strip() for item in file.readlines()]
 
 
-def get_batch(folder_path: str, batch_size: int) -> t.List[np.ndarray]:
-    batch = []
-    for item in os.listdir(folder_path):
+def get_image_path(folder: str) -> t.Iterator[str]:
+    for item in os.listdir(folder):
         if not any(item.lower().endswith(ext) for ext in Config.ALLOWED_EXTS):
             logger.error(
                 f"Cannot validate with the file {item}. Unsupported extension"
             )
             continue
+        yield os.path.join(folder, item)
 
+
+def get_batch(folder: str, batch_size: int) -> t.Iterator[t.List[np.ndarray]]:
+    batch: t.List[np.ndarray] = []
+    to_break = False
+    next_image_gen = get_image_path(folder)
+    while True:
         if len(batch) < batch_size:
-            image_path = os.path.join(folder_path, item)
-            image = cv2.imread(image_path)
-            if image is None:
-                logger.error(f"Failed to open image: {image_path}. Skipped")
-                continue
-            batch.append(image)
-            continue
+            try:
+                image_path = next(next_image_gen)
+                image = cv2.imread(image_path)
+                if image is None:
+                    logger.error(
+                        f"Failed to open image: {image_path}. Skipped"
+                    )
+                    continue
+                batch.append(image)
+            except StopIteration:
+                to_break = True
         if len(batch):
             yield batch
             batch = []
-    if len(batch):
-        yield batch
+        if to_break:
+            break
 
 
 def validate_class(
-        model: TrainedClassificationModel,
-        folder: str,
-        expected_class: str
+    model: TrainedClassificationModel, folder: str, expected_class: str
 ) -> float:
     total_validation_images = len(os.listdir(folder))
     if not total_validation_images:
@@ -124,10 +136,12 @@ def validate_class(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--validation_folder", type=str, required=True)
-    parser.add_argument("--model_weights", type=str,
-                        default="output/model_weights.pth")
-    parser.add_argument("--model_classes", type=str,
-                        default="output/classes.txt")
+    parser.add_argument(
+        "--model_weights", type=str, default="output/model_weights.pth"
+    )
+    parser.add_argument(
+        "--model_classes", type=str, default="output/classes.txt"
+    )
     return parser.parse_args()
 
 
@@ -140,9 +154,7 @@ def main() -> int:
         raise e
 
     model = TrainedClassificationModel(
-        "DigitsClassifier",
-        args.model_weights,
-        args.model_classes
+        "DigitsClassifier", args.model_weights, args.model_classes
     )
     validation_folder = args.validation_folder
     classes_to_validate = os.listdir(validation_folder)
@@ -164,5 +176,5 @@ def main() -> int:
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

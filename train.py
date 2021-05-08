@@ -1,13 +1,13 @@
 import argparse
-import typing as t
 import copy
 import os
+import typing as t
 
+import torch
+import torch.nn as nn
+import torch.optim as optim
 from pydantic import ValidationError
 from torchvision import models
-import torch.nn as nn
-import torch
-import torch.optim as optim
 
 from config import Config
 from helpers import DatasetLoader
@@ -17,22 +17,27 @@ from helpers import visualise_training_results
 
 
 logger = Logger(__name__, verbose=Config.VERBOSE)
-Model = t.TypeVar('Model')
-Param = torch.nn.parameter.Parameter
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--path_to_dataset", type=str, required=True,
-                        help="Path to the dataset in the ImageFolder format")
-    parser.add_argument("--output_path", type=str, required=True,
-                        help="Path to a folder to save training results")
+    parser.add_argument(
+        "--path_to_dataset",
+        type=str,
+        required=True,
+        help="Path to the dataset in the ImageFolder format",
+    )
+    parser.add_argument(
+        "--output_path",
+        type=str,
+        required=True,
+        help="Path to a folder to save training results",
+    )
     return parser.parse_args()
 
 
-def get_sota_model(model_name: str, pretrained: bool) -> Model:
-    """Creates an instance of a SOTA model to train
-    """
+def get_sota_model(model_name: str, pretrained: bool):
+    """Creates an instance of a SOTA model to train"""
     try:
         model = getattr(models, model_name)(pretrained=pretrained)
     except AttributeError as e:
@@ -41,7 +46,7 @@ def get_sota_model(model_name: str, pretrained: bool) -> Model:
     return model
 
 
-def freeze_layers(model: Model) -> Model:
+def freeze_layers(model):
     """Freezes all model's layers meaning they are not trainable - the gradient
     will not be calculated for those neurons, so they wont get "trained"
     """
@@ -50,7 +55,7 @@ def freeze_layers(model: Model) -> Model:
     return model
 
 
-def get_parameters_to_train(model: Model, fine_tuning: bool) -> t.List[Param]:
+def get_parameters_to_train(model, fine_tuning: bool) -> list:
     """Returns a list of trainable parameters - the ones for which the
     gradients will be calculated during backprop
     """
@@ -63,7 +68,7 @@ def get_parameters_to_train(model: Model, fine_tuning: bool) -> t.List[Param]:
     return trainable_parameters
 
 
-def reshape_models_head(model: Model, number_of_classes: int) -> Model:
+def reshape_models_head(model, number_of_classes: int):
     """Reshapes the last dense layer(s) of the model to the number of classes
     the model will be trained for
     """
@@ -87,10 +92,7 @@ def reshape_models_head(model: Model, number_of_classes: int) -> Model:
 
     elif model.__class__.__name__ == "SqueezeNet":
         model.classifier[1] = nn.Conv2d(
-            512,
-            number_of_classes,
-            kernel_size=(1, 1),
-            stride=(1, 1)
+            512, number_of_classes, kernel_size=(1, 1), stride=(1, 1)
         )
         model.num_classes = number_of_classes
     return model
@@ -98,17 +100,17 @@ def reshape_models_head(model: Model, number_of_classes: int) -> Model:
 
 @timer
 def train_model(
-        model: Model,
-        epochs: int,
-        dataloaders: t.Mapping[str, torch.utils.data.DataLoader],
-        device,
-        optimizer: t.Union[optim.SGD, optim.Adam],
-        loss_function: nn.CrossEntropyLoss,
-        dataset_size: t.Mapping[str, int],
-        scheduler: t.Optional[optim.lr_scheduler.StepLR] = None,
-) -> t.Tuple[Model, list, list, float, int]:
+    model,
+    epochs: int,
+    dataloaders: t.Mapping[str, torch.utils.data.DataLoader],
+    device,
+    optimizer: t.Union[optim.SGD, optim.Adam],
+    loss_function: nn.CrossEntropyLoss,
+    dataset_size: t.Mapping[str, int],
+    scheduler: t.Optional[optim.lr_scheduler.StepLR] = None,
+) -> tuple:
     val_accuracy_history, val_loss_history = [], []
-    best_val_accuracy, best_val_loss = 0, float("inf")
+    best_val_accuracy = 0
     best_accuracy_epoch = 0
     best_model_weights = copy.deepcopy(model.state_dict())
     for epoch in range(epochs):
@@ -142,7 +144,9 @@ def train_model(
                 scheduler.step()  # Slow down the learning rate
 
             epoch_loss = running_loss / dataset_size[phase]
-            epoch_accuracy = running_corrects.double() / dataset_size[phase]
+            epoch_accuracy = (
+                running_corrects.double() / dataset_size[phase]  # type: ignore
+            )
             logger.info(
                 f"{phase.upper()} Loss: {epoch_loss:.4f}. "
                 f"Accuracy: {epoch_accuracy:.4f}"
@@ -165,7 +169,7 @@ def train_model(
         val_accuracy_history,
         val_loss_history,
         best_val_accuracy,
-        best_accuracy_epoch
+        best_accuracy_epoch,
     )
 
 
@@ -187,13 +191,13 @@ def main() -> int:
         path_to_dataset=args.path_to_dataset,
         augmentation=Config.DO_AUGMENTATION,
         input_size=Config.INPUT_SIZE,
-        batch_size=Config.BATCH_SIZE
+        batch_size=Config.BATCH_SIZE,
     )
     (
         image_dataset,
         data_loaders,
         dataset_sizes,
-        class_names
+        class_names,
     ) = dataset_manager.get_training_dataset()
     logger.info("Dataloaders obtained")
 
@@ -228,15 +232,11 @@ def main() -> int:
     # some other hyperparameters
     if Config.OPTIMIZER.upper() == "ADAM":
         optimizer = optim.Adam(
-            params=trainable_parameters,
-            lr=Config.LR,
-            betas=(0.9, 0.999)
+            params=trainable_parameters, lr=Config.LR, betas=(0.9, 0.999)
         )
     elif Config.OPTIMIZER.upper() == "SGD":
         optimizer = optim.SGD(
-            params=trainable_parameters,
-            lr=Config.LR,
-            momentum=0.9
+            params=trainable_parameters, lr=Config.LR, momentum=0.9
         )
     else:
         raise NotImplementedError(
@@ -254,9 +254,7 @@ def main() -> int:
     scheduler = None
     if Config.SCHEDULER:
         scheduler = optim.lr_scheduler.StepLR(
-            optimizer=optimizer,
-            step_size=5,
-            gamma=0.1
+            optimizer=optimizer, step_size=5, gamma=0.1
         )
 
     if Config.GPU:
@@ -284,13 +282,15 @@ def main() -> int:
         val_accuracy_history,
         val_loss_history,
         best_val_accuracy,
-        best_accuracy_epoch
+        best_accuracy_epoch,
     ) = metrics
     visualise_training_results(val_accuracy_history, val_loss_history)
-    logger.info(f"Best accuracy: {best_val_accuracy} achieved "
-                f"on the {best_accuracy_epoch} epoch")
+    logger.info(
+        f"Best accuracy: {best_val_accuracy} achieved "
+        f"on the {best_accuracy_epoch} epoch"
+    )
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -21,5 +21,5 @@ class Config:
     NORMALIZATION_STD = [0.229, 0.224, 0.225]
 
     # INFERENCE / SCORING
-    INFERENCE_BATCH = 150
+    INFERENCE_BATCH = 15
     ALLOWED_EXTS = [".png", ".jpg", ".jpeg"]
