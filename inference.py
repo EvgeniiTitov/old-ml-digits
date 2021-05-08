@@ -7,15 +7,22 @@ import cv2
 import numpy as np
 import torchvision
 from PIL import Image
+from pydantic import ValidationError
 
 from helpers import LoggerMixin, Logger
 from config import Config
+from helpers import RuntimeArgsValidator
 
 
 logger = Logger(__file__, verbose=Config.VERBOSE)
 
 
-class TrainedClassifierModel(LoggerMixin):
+class TrainedClassificationModel(LoggerMixin):
+    """
+    Wrapper class for a trained classification model. Any pytorch model could
+    be plugged in provided that it relies on the preprocessing steps
+    implemented below
+    """
     def __init__(
             self,
             model_name: str,
@@ -28,11 +35,11 @@ class TrainedClassifierModel(LoggerMixin):
             self._model = torch.load(model_weights)
         except Exception as e:
             self.logger.exception(
-                f"Failed to load the model. Error: {e}"
+                f"Failed to load the model {model_name}. Error: {e}"
             )
             raise e
         self._model.eval()
-        self._classes = TrainedClassifierModel.read_classes(model_classes)
+        self._classes = TrainedClassificationModel.read_classes(model_classes)
         self.logger.info(
             f"The model {model_name} initialized with classes {self._classes}"
         )
@@ -75,15 +82,16 @@ class TrainedClassifierModel(LoggerMixin):
             return [item.strip() for item in file.readlines()]
 
 
-def get_batch(folder_path: str) -> t.List[np.ndarray]:
+def get_batch(folder_path: str, batch_size: int) -> t.List[np.ndarray]:
     batch = []
     for item in os.listdir(folder_path):
         if not any(item.lower().endswith(ext) for ext in Config.ALLOWED_EXTS):
             logger.error(
-                f"Cannot validate of file {item}. Unsupported extension"
+                f"Cannot validate with the file {item}. Unsupported extension"
             )
             continue
-        if len(batch) < Config.INFERENCE_BATCH:
+
+        if len(batch) < batch_size:
             image_path = os.path.join(folder_path, item)
             image = cv2.imread(image_path)
             if image is None:
@@ -99,51 +107,59 @@ def get_batch(folder_path: str) -> t.List[np.ndarray]:
 
 
 def validate_class(
-        model: TrainedClassifierModel,
+        model: TrainedClassificationModel,
         folder: str,
         expected_class: str
-) -> t.Tuple[int, int]:
+) -> float:
     total_validation_images = len(os.listdir(folder))
+    if not total_validation_images:
+        raise Exception(f"The validation folder {folder} is empty")
     correct = 0
-    for batch in get_batch(folder):
+    for batch in get_batch(folder, Config.INFERENCE_BATCH):
         preds: t.List[str] = model.process_batch(batch)
         correct += preds.count(expected_class)
-    return total_validation_images, correct
+    return correct / total_validation_images
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--validation_folder", type=str, required=True)
+    parser.add_argument("--model_weights", type=str,
+                        default="output/model_weights.pth")
+    parser.add_argument("--model_classes", type=str,
+                        default="output/classes.txt")
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    if not os.path.exists(args.validation_folder):
-        raise FileNotFoundError("Failed to locate the validation folder")
+    try:
+        RuntimeArgsValidator(**(vars(args)))
+    except ValidationError as e:
+        logger.exception(f"Failed to validate the provided args. Error: {e}")
+        raise e
 
-    model = TrainedClassifierModel(
+    model = TrainedClassificationModel(
         "DigitsClassifier",
-        os.path.join("output", "model_weights.pth"),
-        os.path.join("output", "classes.txt")
+        args.model_weights,
+        args.model_classes
     )
     validation_folder = args.validation_folder
     classes_to_validate = os.listdir(validation_folder)
     logger.info(
-        f"The following classes will be validated: {classes_to_validate}"
+        f"The following classes will be validated (found in the folder "
+        f"provided): {classes_to_validate}"
     )
-
-    total_global, correct_global = 0, 0
+    accuracies = 0.0
     for cls in classes_to_validate:
         logger.info(f"Validating class: {cls}")
-        total, correct = validate_class(
+        accuracy = validate_class(
             model, os.path.join(validation_folder, cls), str(cls)
         )
-        logger.info(f"Validation results for class {cls}: {correct} / {total}")
-        total_global += total
-        correct_global += correct
+        logger.info(f"Validation results for class {cls} is {accuracy:.4f}")
+        accuracies += accuracy
 
-    accuracy = correct_global / total_global
+    accuracy = accuracies / len(classes_to_validate)
     logger.info(f"ACCURACY: {accuracy:.4f}")
     return 0
 
