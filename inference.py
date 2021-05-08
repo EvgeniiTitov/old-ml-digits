@@ -135,7 +135,12 @@ def validate_class(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--validation_folder", type=str, required=True)
+    parser.add_argument(
+        "--validation_folder",
+        type=str,
+        required=True,
+        help="path to .../data/mnist/testing",
+    )
     parser.add_argument(
         "--model_weights", type=str, default="output/model_weights.pth"
     )
