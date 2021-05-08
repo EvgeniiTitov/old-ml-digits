@@ -25,7 +25,7 @@ def parse_args() -> argparse.Namespace:
         "--path_to_dataset",
         type=str,
         required=True,
-        help="Path to the dataset in the ImageFolder format",
+        help="Path to the dataset in the ! ImageFolder ! format",
     )
     parser.add_argument(
         "--output_path",
